@@ -6,6 +6,8 @@ import org.apache.commons.dbutils.handlers.BeanHandler;
 import org.apache.commons.dbutils.handlers.BeanListHandler;
 import org.apache.commons.dbutils.handlers.ScalarHandler;
 
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
@@ -19,11 +21,27 @@ import java.util.List;
  * 3.List<T> getBeanList返回javabeanList
  * 4.Object getValue获取单个值
  * 5.除了BsicDao，其它的Dao均为接口，然后在Imp里面实现
+ * 6.再QueryRunner中增删改都是update，查看是query
  */
 
 public class BasicDao<T> {
     private QueryRunner qr = new QueryRunner();
     //开发通用的 dml 方法, 针对任意的表
+    private Class<T> type;
+    public BasicDao() {
+        //这里是后面继承就不用自己再传javabean的class对象了，这里做一个自动识别的工作
+        // 获取子类的类型,这个是由子类调用
+        Class clazz = this.getClass();
+        // 获取父类的类型
+        // getGenericSuperclass()用来获取当前类的父类的类型
+        // ParameterizedType表示的是带泛型的类型
+        ParameterizedType parameterizedType = (ParameterizedType) clazz.getGenericSuperclass();
+        // 获取具体的泛型类型 getActualTypeArguments获取具体的泛型的类型
+        // 这个方法会返回一个Type的数组
+        Type[] types = parameterizedType.getActualTypeArguments();
+        // 获取具体的泛型的类型
+        this.type = (Class<T>) types[0];
+    }
 
     /**
      * 常用更新操作
@@ -47,15 +65,14 @@ public class BasicDao<T> {
     /**
      * 返回一个javabean对象，就是数据库一行的结果
      * @param sql
-     * @param clazz
      * @param parameters
      * @return 返回数据库一行的结果，封装到T中，一般是一个javabean对象
      */
-    public T getBean(String sql, Class<T> clazz, Object... parameters) {
+    public T getBean(String sql,Object... parameters) {
         Connection connection = null;
         try {
             connection = JDBCUtilsByDruid.getConnection();
-            return qr.query(connection, sql, new BeanHandler<T>(clazz), parameters);
+            return qr.query(connection, sql, new BeanHandler<T>(type), parameters);
         } catch (SQLException e) {
             throw new RuntimeException(e); //将编译异常->运行异常 ,抛出
         } finally {
@@ -66,15 +83,14 @@ public class BasicDao<T> {
     /**
      *返回T对象的List集合
      * @param sql sql 语句，可以有 ?
-     * @param clazz 传入一个类的 Class 对象 比如 Actor.class
      * @param parameters 传入 ? 的具体的值，可以是多个
      * @return 根据 Actor.class 返回对应的 ArrayList 集合
      */
-    public List<T> getBeanList(String sql, Class<T> clazz, Object... parameters) {
+    public List<T> getBeanList(String sql, Object... parameters) {
         Connection connection = null;
         try {
             connection = JDBCUtilsByDruid.getConnection();
-            return qr.query(connection, sql, new BeanListHandler<T>(clazz), parameters);
+            return qr.query(connection, sql, new BeanListHandler<T>(type), parameters);
         } catch (SQLException e) {
             throw new RuntimeException(e); //将编译异常->运行异常 ,抛出
         } finally {

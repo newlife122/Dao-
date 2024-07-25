@@ -13,6 +13,17 @@ public class Emp{
     private Date create_time;
     private Date update_time;
 
+    @Override
+    public String toString() {
+        return "Emp{" +
+                "id=" + id +
+                ", username='" + username + '\'' +
+                ", password='" + password + '\'' +
+                ", name='" + name + '\'' +
+                ", create_time=" + create_time +
+                ", update_time=" + update_time +
+                '}';
+    }
 
     public Emp() {
 

@@ -14,10 +14,13 @@ import java.util.Properties;
 public class test {
     public static void main(String[] args) throws Exception {
         test aq = new test();
-        Class<?> a = Class.forName("com.nanli.muban.javabean.EMP");
+        Class<?> a = Class.forName("com.nanli.muban.javabean.Emp");
         Properties peo = new Properties();
         peo.load(test.class.getClassLoader().getResourceAsStream("druid.properties"));
         List<Emp> list= aq.getList(Emp.class,"select * from emp");
+        for (Emp emp : list) {
+            System.out.println(emp.getName());
+        }
         System.out.println(list);
     }
 
